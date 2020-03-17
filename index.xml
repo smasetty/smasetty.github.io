@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Sharat Masetty</title>
+    <link>/</link>
+    <description>Recent content on Sharat Masetty</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>sharat_masetty@yahoo.com (Sharat Masetty)</managingEditor>
+    <webMaster>sharat_masetty@yahoo.com (Sharat Masetty)</webMaster>
+    <lastBuildDate>Sun, 15 Dec 2019 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Second post!</title>
+      <link>/2019/12/second-post/</link>
+      <pubDate>Sun, 15 Dec 2019 00:00:00 +0000</pubDate>
+      <author>sharat_masetty@yahoo.com (Sharat Masetty)</author>
+      <guid>/2019/12/second-post/</guid>
+      <description>This is my Second post!!</description>
+    </item>
+    
+    <item>
+      <title>First post!</title>
+      <link>/2015/01/first-post/</link>
+      <pubDate>Mon, 05 Jan 2015 00:00:00 +0000</pubDate>
+      <author>sharat_masetty@yahoo.com (Sharat Masetty)</author>
+      <guid>/2015/01/first-post/</guid>
+      <description>This is my first post, how exciting!</description>
+    </item>
+    
+    <item>
+      <title>About me</title>
+      <link>/page/about/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <author>sharat_masetty@yahoo.com (Sharat Masetty)</author>
+      <guid>/page/about/</guid>
+      <description>My name is Inigo Montoya. I have the following qualities:
+ I rock a great mustache I&amp;rsquo;m extremely loyal to my family  What else do you need?
+my history To be honest, I&amp;rsquo;m having some trouble remembering right now, so why don&amp;rsquo;t you just watch my movie and it will answer all your questions.</description>
+    </item>
+    
+  </channel>
+</rss>
