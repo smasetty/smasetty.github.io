@@ -10,15 +10,18 @@ body {
   flex-flow: column;
   height: 100vh;
 }
+
 .container[role=main] {
   margin-bottom:50px;
   flex: 1 0 auto;
+  text-align: justify;
 }
 
 @media only screen and (max-width: 767px) {
 .container[role=main] {
     margin-left: 0;
     margin-right: 0;
+    text-align: justify;
 }
 }
 
@@ -767,7 +770,7 @@ div.splitbox div.right {
     padding: 15px 25px;
   }
 }
-.disqus-comments button:hover, 
+.disqus-comments button:hover,
 .disqus-comments button:focus {
   color: #FFF;
   background: #0085a1;
