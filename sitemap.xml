@@ -4,23 +4,18 @@
   
   <url>
     <loc>https://smasetty.github.io/</loc>
-    <lastmod>2019-12-15T00:00:00+00:00</lastmod>
+    <lastmod>2019-12-10T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://smasetty.github.io/post/</loc>
-    <lastmod>2019-12-15T00:00:00+00:00</lastmod>
+    <lastmod>2019-12-10T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>https://smasetty.github.io/2019/12/second-post/</loc>
-    <lastmod>2019-12-15T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://smasetty.github.io/2015/01/first-post/</loc>
-    <lastmod>2015-01-05T00:00:00+00:00</lastmod>
+    <loc>https://smasetty.github.io/2019/12/ref-counted-objects-and-c-smart-pointers/</loc>
+    <lastmod>2019-12-10T00:00:00+00:00</lastmod>
   </url>
   
   <url>

@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/WebPage">
+  <head>
+    
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <title>Ref Counted Objects and C&#43;&#43; Smart Pointers - Sharat Masetty</title>
+  <meta name="description" content="In this article we will look into implementing a simple smart pointer class
+with reference counting support for tracking the lifetime of a pointer. First
+we will try to understand the primary models of memory management in most modern
+programming languages.">
+  <meta name="author" content="Sharat Masetty"/><script type="application/ld+json">
+{
+    "@context": "http://schema.org",
+    "@type": "WebSite",
+    "name": "Sharat Masetty",
+    
+    "url": "https:\/\/smasetty.github.io"
+}
+</script><script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "Organization",
+  "name": "",
+  "url": "https:\/\/smasetty.github.io"
+  
+  
+  
+  
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "item": {
+          "@id": "https:\/\/smasetty.github.io",
+          "name": "home"
+        }
+    },{
+        "@type": "ListItem",
+        "position": 3,
+        "item": {
+          "@id": "https:\/\/smasetty.github.io\/2019\/12\/ref-counted-objects-and-c-smart-pointers\/",
+          "name": "Ref counted objects and c\x2b\x2b smart pointers"
+        }
+    }]
+}
+</script><script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "Article",
+  "author": {
+    "name" : "Sharat Masetty"
+  },
+  "headline": "Ref Counted Objects and C\x2b\x2b Smart Pointers",
+  "description" : "In this article we will look into implementing a simple smart pointer class with reference counting support for tracking the lifetime of a pointer. First we will try to understand the primary models of memory management in most modern programming languages.\n",
+  "inLanguage" : "en",
+  "wordCount":  1244 ,
+  "datePublished" : "2019-12-10T00:00:00",
+  "dateModified" : "2019-12-10T00:00:00",
+  "image" : "https:\/\/smasetty.github.io\/img\/sharat-2.jpg",
+  "keywords" : [ "" ],
+  "mainEntityOfPage" : "https:\/\/smasetty.github.io\/2019\/12\/ref-counted-objects-and-c-smart-pointers\/",
+  "publisher" : {
+    "@type": "Organization",
+    "name" : "https:\/\/smasetty.github.io",
+    "logo" : {
+        "@type" : "ImageObject",
+        "url" : "https:\/\/smasetty.github.io\/img\/sharat-2.jpg",
+        "height" :  60 ,
+        "width" :  60
+    }
+  }
+}
+</script>
+
+<meta property="og:title" content="Ref Counted Objects and C&#43;&#43; Smart Pointers" />
+<meta property="og:description" content="In this article we will look into implementing a simple smart pointer class
+with reference counting support for tracking the lifetime of a pointer. First
+we will try to understand the primary models of memory management in most modern
+programming languages.">
+<meta property="og:image" content="https://smasetty.github.io/img/sharat-2.jpg" />
+<meta property="og:url" content="https://smasetty.github.io/2019/12/ref-counted-objects-and-c-smart-pointers/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Sharat Masetty" />
+
+  <meta name="twitter:title" content="Ref Counted Objects and C&#43;&#43; Smart Pointers" />
+  <meta name="twitter:description" content="In this article we will look into implementing a simple smart pointer class
+with reference counting support for tracking the lifetime of a pointer. First
+we will try to understand the primary models …">
+  <meta name="twitter:image" content="https://smasetty.github.io/img/sharat-2.jpg" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:site" content="@smasetty" />
+  <meta name="twitter:creator" content="@smasetty" />
+  <link href='https://smasetty.github.io/img/favicon.ico' rel='icon' type='image/x-icon'/>
+  <meta name="generator" content="Hugo 0.67.0" />
+  <link rel="alternate" href="https://smasetty.github.io/index.xml" type="application/rss+xml" title="Sharat Masetty"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"><link rel="stylesheet" href="https://smasetty.github.io/css/main.css" /><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" /><link rel="stylesheet" href="https://smasetty.github.io/css/syntax.css" /><link rel="stylesheet" href="https://smasetty.github.io/css/codeblock.css" /><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.css" integrity="sha384-h/L2W9KefUClHWaty3SLE5F/qvc4djlyR4qY3NUV5HGQBBW7stbcfff1+I/vmsHh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/default-skin/default-skin.min.css" integrity="sha384-iD0dNku6PYSIQLyfTOpB06F2KCZJAKLOThS5HRe8b3ibhdEQ6eKsFf/EeFxdOt5R" crossorigin="anonymous">
+
+
+
+  </head>
+  <body>
+    <nav class="navbar navbar-default navbar-fixed-top navbar-custom">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#main-navbar">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="https://smasetty.github.io">Sharat Masetty</a>
+    </div>
+
+    <div class="collapse navbar-collapse" id="main-navbar">
+      <ul class="nav navbar-nav navbar-right">
+        
+          
+            <li>
+              <a title="Blog" href="https://smasetty.github.io/">Blog</a>
+            </li>
+          
+        
+          
+            <li>
+              <a title="About" href="https://smasetty.github.io/page/about/">About</a>
+            </li>
+          
+        
+          
+            <li>
+              <a title="Projects" href="https://smasetty.github.io/page/projects">Projects</a>
+            </li>
+          
+        
+          
+            <li>
+              <a title="Tags" href="https://smasetty.github.io/tags">Tags</a>
+            </li>
+          
+        
+
+        
+
+        
+      </ul>
+    </div>
+
+    
+      <div class="avatar-container">
+        <div class="avatar-img-border">
+          <a title="Sharat Masetty" href="https://smasetty.github.io">
+            <img class="avatar-img" src="https://smasetty.github.io/img/sharat-2.jpg" alt="Sharat Masetty" />
+          </a>
+        </div>
+      </div>
+    
+
+  </div>
+</nav>
+
+
+
+
+    
+
+
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+<div class="pswp__bg"></div>
+
+<div class="pswp__scroll-wrap">
+    
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+    
+    <div class="pswp__ui pswp__ui--hidden">
+    <div class="pswp__top-bar">
+      
+      <div class="pswp__counter"></div>
+      <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+      <button class="pswp__button pswp__button--share" title="Share"></button>
+      <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+      <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+      
+      
+      <div class="pswp__preloader">
+        <div class="pswp__preloader__icn">
+          <div class="pswp__preloader__cut">
+            <div class="pswp__preloader__donut"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+      <div class="pswp__share-tooltip"></div>
+    </div>
+    <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+    </button>
+    <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+    </button>
+    <div class="pswp__caption">
+      <div class="pswp__caption__center"></div>
+    </div>
+    </div>
+    </div>
+</div>
+
+
+  
+  
+  
+
+
+
+
+
+
+  
+
+  <header class="header-section ">
+    
+    <div class="intro-header no-img">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+            <div class="post-heading">
+              
+                <h1>Ref Counted Objects and C&#43;&#43; Smart Pointers</h1>
+              
+              
+              
+              
+                <span class="post-meta">
+  
+  
+  <i class="fas fa-calendar"></i>&nbsp;Posted on December 10, 2019
+  
+  
+    &nbsp;|&nbsp;<i class="fas fa-clock"></i>&nbsp;6&nbsp;minutes
+  
+  
+    &nbsp;|&nbsp;<i class="fas fa-book"></i>&nbsp;1244&nbsp;words
+  
+  
+    
+      &nbsp;|&nbsp;<i class="fas fa-user"></i>&nbsp;Sharat Masetty
+    
+  
+  
+</span>
+
+
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+
+    
+<div class="container" role="main">
+  <div class="row">
+    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+      <article role="main" class="blog-post">
+        <p>In this article we will look into implementing a simple smart pointer class
+with reference counting support for tracking the lifetime of a pointer. First
+we will try to understand the primary models of memory management in most modern
+programming languages.</p>
+<p>One of the primary considerations when picking a language is memory management
+and there are primarily two main models. The first one is
+the garbage collection(GC) model and the second one is the automatic reference
+counting model(ARC). Any new modern programming language these days
+adopts either of these two approaches for memory management. With these models, the developer is
+freed the burden of tracking and freeing memory. One might also argue that the
+applications can be less error prone as a result. Both the approaches have their
+own pros and cons however. Lets dig a little deeper into these two models.</p>
+<h4 id="garbage-collectiongc">Garbage Collection(GC)</h4>
+<p>In the GC model, the application process typically runs a garbage collector thread
+which runs through the object graph and tries to clean up the objects which are
+no longer active(or useful) in the context of the user program execution. At at
+high level this is a two step process, in the first step the thread runs through
+the objects and marks the objects which are safe to delete, the same thread as part
+of step 2, runs at a later(non deterministic) time and frees up the objects
+marked as safe to delete in step 1.</p>
+<p>The primary <em>shortcomings</em> of the GC model are that the object destructor calls are
+now non deterministic. Secondly, the GC thread can slow down the application program, more
+so in cases where the program requires a lot of memory objects and the process
+or the system is running into a low memory conditions.</p>
+<h4 id="automatic-reference-counting-arc">Automatic Reference Counting (ARC)</h4>
+<p>In this model ARC unlike the GC model there is no
+separate thread of execution, but the logic of object clean up is embedded as
+part of the language constructs. The objects are automatically reference counted
+as part of object creation, copying/assignment operations and when the reference
+count hits zero, the object is cleaned up. The compiler adds code to manage the
+reference counting, relieving the developer of the duties. So in this case
+calling the object destructors is now deterministic and unlike earlier model
+there is no separate thread of execution.</p>
+<p>The primary <em>shortcoming</em> of this model however is that it does not handle
+weak references or weak pointers very well.</p>
+<p>Now let us look at a simple smart pointer class definition which will help us
+realize and understand how an ARC model works.</p>
+<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="ln"> 1</span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="k">class</span> <span class="nc">SmartPointer</span> <span class="p">{</span>
+<span class="ln"> 2</span><span class="k">private</span><span class="o">:</span>
+<span class="ln"> 3</span>        <span class="n">T</span><span class="o">*</span> <span class="n">mData</span><span class="p">;</span>
+<span class="ln"> 4</span>        <span class="kt">int</span><span class="o">*</span> <span class="n">mCount</span><span class="p">;</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 7</span>        <span class="n">SmartPointer</span><span class="p">()</span><span class="o">:</span> <span class="n">mData</span><span class="p">(</span><span class="k">nullptr</span><span class="p">),</span> <span class="n">mCount</span><span class="p">(</span><span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>            <span class="n">mCount</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="p">();</span>
+<span class="ln"> 9</span>            <span class="o">*</span><span class="n">mCount</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">10</span>        <span class="p">}</span>
+<span class="ln">11</span>
+<span class="ln">12</span>        <span class="n">SmartPointer</span><span class="p">(</span><span class="n">T</span><span class="o">*</span> <span class="n">data</span><span class="p">)</span><span class="o">:</span> <span class="n">mData</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">mCount</span><span class="p">(</span><span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">13</span>            <span class="n">mCount</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="p">();</span>
+<span class="ln">14</span>            <span class="o">*</span><span class="n">mCount</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">15</span>        <span class="p">}</span>
+<span class="ln">16</span>
+<span class="ln">17</span>        <span class="n">SmartPointer</span><span class="p">(</span><span class="k">const</span> <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">sp</span><span class="p">)</span><span class="o">:</span>
+<span class="ln">18</span>                <span class="n">mData</span><span class="p">(</span><span class="n">sp</span><span class="p">.</span><span class="n">mData</span><span class="p">),</span> <span class="n">mCount</span><span class="p">(</span><span class="n">sp</span><span class="p">.</span><span class="n">mCount</span><span class="p">)</span> <span class="p">{</span> <span class="o">++*</span><span class="n">mCount</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">19</span>
+<span class="ln">20</span>        <span class="o">~</span><span class="n">SmartPointer</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">21</span>            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="o">--*</span><span class="n">mCount</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">22</span>                <span class="k">delete</span> <span class="n">mData</span><span class="p">;</span>
+<span class="ln">23</span>                <span class="k">delete</span> <span class="n">mCount</span><span class="p">;</span>
+<span class="ln">24</span>            <span class="p">}</span>
+<span class="ln">25</span>        <span class="p">}</span>
+<span class="ln">26</span>
+<span class="ln">27</span>        <span class="n">T</span> <span class="k">operator</span><span class="o">-&gt;</span> <span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="n">mData</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">28</span>
+<span class="ln">29</span>        <span class="n">T</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">*</span> <span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="o">*</span><span class="n">mData</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">30</span>
+<span class="ln">31</span>        <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="k">const</span> <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span> <span class="n">sp</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">32</span>            <span class="k">if</span> <span class="p">(</span><span class="k">this</span> <span class="o">==</span> <span class="o">&amp;</span><span class="n">sp</span><span class="p">)</span>
+<span class="ln">33</span>                <span class="k">return</span> <span class="o">*</span><span class="k">this</span><span class="p">;</span>
+<span class="ln">34</span>
+<span class="ln">35</span>            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="o">--*</span><span class="n">mCount</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">36</span>                <span class="k">delete</span> <span class="n">mData</span><span class="p">;</span>
+<span class="ln">37</span>                <span class="k">delete</span> <span class="n">mCount</span><span class="p">;</span>
+<span class="ln">38</span>            <span class="p">}</span>
+<span class="ln">39</span>
+<span class="ln">40</span>            <span class="n">mData</span> <span class="o">=</span> <span class="n">sp</span><span class="p">.</span><span class="n">mData</span><span class="p">;</span>
+<span class="ln">41</span>            <span class="n">mCount</span> <span class="o">=</span> <span class="n">sp</span><span class="p">.</span><span class="n">mCount</span><span class="p">;</span>
+<span class="ln">42</span>            <span class="o">++*</span><span class="n">mCount</span><span class="p">;</span>
+<span class="ln">43</span>
+<span class="ln">44</span>            <span class="k">return</span> <span class="o">*</span><span class="k">this</span><span class="p">;</span>
+<span class="ln">45</span>        <span class="p">}</span>
+<span class="ln">46</span><span class="p">};</span>
+</code></pre></div>
+<p>Let me try to explain this code. The template class SmartPointer is a wrapper for the
+underlying pointer type. This class also hosts a reference count which tracks
+the life cycle of the pointer. The mCount variable handles the reference count
+of the pointer.</p>
+<p>When a user plans to manage the pointers the smart way, they simply would have to
+allocate the underlying object which needs tracking and then create an object of SmartPointer
+type feeding it the pointer from the prior memory allocation. Now, as part of the
+constructor for the SmartPointer class, a new reference count is instantiated and
+initialized with value 1. Now for all intents and purposes this reference count is
+tracking the life of this pointer. When copying or assigning pointers the
+reference count is incremented, and when the object goes out of scope, the
+reference count is decremented, and when the object goes out of scope, the
+reference count is decremented. When the reference count hits 0, the underlying
+object and the associated reference object are both freed up.</p>
+<p>The major complexity of reference management comes in handling the copy
+constructor and the overloaded assignment operator</p>
+<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="ln">1</span>        <span class="n">SmartPointer</span><span class="p">(</span><span class="k">const</span> <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">sp</span><span class="p">)</span><span class="o">:</span>
+<span class="ln">2</span>                <span class="n">mData</span><span class="p">(</span><span class="n">sp</span><span class="p">.</span><span class="n">mData</span><span class="p">),</span> <span class="n">mCount</span><span class="p">(</span><span class="n">sp</span><span class="p">.</span><span class="n">mCount</span><span class="p">)</span> <span class="p">{</span> <span class="o">++*</span><span class="n">mCount</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">3</span>
+<span class="ln">4</span>        <span class="c1">// example: The below statement calls the copy constructor
+</span><span class="ln">5</span><span class="c1"></span>        <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">Employee</span><span class="o">&gt;</span> <span class="n">emp2</span> <span class="o">=</span> <span class="n">emp1</span><span class="p">;</span>
+</code></pre></div>
+<p>This code snippet show the code for the copy constructor of the SmartPointer
+class. When the copy constructor is called, the reference count pointer from incoming SmartPointer
+object is copied over and then incremented as both emp1 and emp2 are now
+tracking the same underlying object.</p>
+<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="ln"> 1</span>        <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="k">const</span> <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span> <span class="n">sp</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 2</span>            <span class="k">if</span> <span class="p">(</span><span class="k">this</span> <span class="o">==</span> <span class="o">&amp;</span><span class="n">sp</span><span class="p">)</span>
+<span class="ln"> 3</span>                <span class="k">return</span> <span class="o">*</span><span class="k">this</span><span class="p">;</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span>            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="o">--*</span><span class="n">mCount</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 6</span>                <span class="k">delete</span> <span class="n">mData</span><span class="p">;</span>
+<span class="ln"> 7</span>                <span class="k">delete</span> <span class="n">mCount</span><span class="p">;</span>
+<span class="ln"> 8</span>            <span class="p">}</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>            <span class="n">mData</span> <span class="o">=</span> <span class="n">sp</span><span class="p">.</span><span class="n">mData</span><span class="p">;</span>
+<span class="ln">11</span>            <span class="n">mCount</span> <span class="o">=</span> <span class="n">sp</span><span class="p">.</span><span class="n">mCount</span><span class="p">;</span>
+<span class="ln">12</span>            <span class="o">++*</span><span class="n">mCount</span><span class="p">;</span>
+<span class="ln">13</span>
+<span class="ln">14</span>            <span class="k">return</span> <span class="o">*</span><span class="k">this</span><span class="p">;</span>
+<span class="ln">15</span>        <span class="p">}</span>
+<span class="ln">16</span>
+<span class="ln">17</span>        <span class="c1">//example invocation of the overloaded assignment operator
+</span><span class="ln">18</span><span class="c1"></span>        <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">Employee</span><span class="o">&gt;</span> <span class="n">emp3</span><span class="p">;</span>
+<span class="ln">19</span>        <span class="n">emp3</span> <span class="o">=</span> <span class="n">emp1</span><span class="p">;</span>
+</code></pre></div>
+<p>Assignment operator overload is slightly more involved than the copy constructor.
+Here we need to first check if the incoming object is the same object as the
+current object being operated upon. If they are not the same, then we need to
+first reduce the reference count of the lhs object(emp3 in the example above) and if the
+reference count hits zero, then delete the memory and the reference count of the
+lhs object. Then
+we copy over the pointer and the reference from the incoming rhs SmartPointer object(emp1)
+and then increment the reference count. Note even in this case, both emp3 and
+emp1 end up tracking the same underlying memory object.</p>
+<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="ln"> 1</span><span class="k">struct</span> <span class="nc">Employee</span> <span class="p">{</span>
+<span class="ln"> 2</span>    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">name</span><span class="p">;</span>
+<span class="ln"> 3</span>    <span class="kt">int</span> <span class="n">age</span><span class="p">;</span>
+<span class="ln"> 4</span>    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">designation</span><span class="p">;</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 7</span>    <span class="n">Employee</span><span class="p">()</span><span class="o">:</span> <span class="n">name</span><span class="p">(</span><span class="s">&#34;&#34;</span><span class="p">),</span> <span class="n">age</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">designation</span><span class="p">(</span><span class="s">&#34;&#34;</span><span class="p">)</span> <span class="p">{};</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>    <span class="n">Employee</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">name</span><span class="p">,</span> <span class="kt">int</span> <span class="n">age</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">designation</span><span class="p">)</span><span class="o">:</span>
+<span class="ln">10</span>        <span class="n">name</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">age</span><span class="p">(</span><span class="n">age</span><span class="p">),</span> <span class="n">designation</span><span class="p">(</span><span class="n">designation</span><span class="p">)</span> <span class="p">{};</span>
+<span class="ln">11</span><span class="p">};</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">14</span>    <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">Employee</span><span class="o">&gt;</span> <span class="n">emp1</span><span class="p">(</span><span class="k">new</span> <span class="n">Employee</span><span class="p">(</span><span class="s">&#34;Alien1&#34;</span><span class="p">,</span> <span class="mi">251</span><span class="p">,</span>
+<span class="ln">15</span>                                    <span class="s">&#34;Space Ship Janitor&#34;</span><span class="p">));</span>
+<span class="ln">16</span>
+<span class="ln">17</span>    <span class="p">{</span>
+<span class="ln">18</span>        <span class="c1">// The below statement calls the copy constructor
+</span><span class="ln">19</span><span class="c1"></span>        <span class="c1">//ref count of emp1 is incremented to 2
+</span><span class="ln">20</span><span class="c1"></span>        <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">Employee</span><span class="o">&gt;</span> <span class="n">emp2</span> <span class="o">=</span> <span class="n">emp1</span><span class="p">;</span>
+<span class="ln">21</span>        <span class="c1">// Do something here with emp2
+</span><span class="ln">22</span><span class="c1"></span>
+<span class="ln">23</span>        <span class="c1">// The below statement calls the overloaded assignment operator
+</span><span class="ln">24</span><span class="c1"></span>        <span class="c1">// ref count of emp3 is set to 0 and emp1 is incremented to 3
+</span><span class="ln">25</span><span class="c1"></span>        <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">Employee</span><span class="o">&gt;</span> <span class="n">emp3</span><span class="p">;</span>
+<span class="ln">26</span>        <span class="n">emp3</span> <span class="o">=</span> <span class="n">emp1</span><span class="p">;</span>
+<span class="ln">27</span>    <span class="p">}</span> <span class="c1">// emp2, emp3 destructor will be called here and ref count
+</span><span class="ln">28</span><span class="c1"></span>      <span class="c1">//of emp1 goes back to 1
+</span><span class="ln">29</span><span class="c1"></span>
+<span class="ln">30</span>    <span class="c1">//emp1 destructor will be called herer
+</span><span class="ln">31</span><span class="c1"></span>    <span class="c1">//ref count goes to emp1 hits 0 and the underlying Employee
+</span><span class="ln">32</span><span class="c1"></span>    <span class="c1">//pointer is freed up
+</span><span class="ln">33</span><span class="c1"></span><span class="p">}</span>
+</code></pre></div>
+<p>Here is a simple example of using the SmartPointer objects for tracking the
+pointers lifetime. SmartPointer emp1 is instantiated with an object of type
+Employee allocated on the heap(new Employee() returns a pointer). This pointer is now
+managed by the SmartPointer class with reference counting.</p>
+<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="ln">1</span>    <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">Employee</span><span class="o">&gt;</span> <span class="n">emp1</span><span class="p">(</span><span class="k">new</span> <span class="n">Employee</span><span class="p">(</span><span class="s">&#34;Alien1&#34;</span><span class="p">,</span> <span class="mi">251</span><span class="p">,</span>
+<span class="ln">2</span>                                    <span class="s">&#34;Space Ship Janitor&#34;</span><span class="p">));</span>
+</code></pre></div>
+<p>I have added comments to explain the reference counting of the underlying
+pointer object and when it is freed up.</p>
+
+        
+
+        
+
+        
+          
+
+          
+        
+      </article>
+
+      
+        <ul class="pager blog-pager">
+          
+          
+        </ul>
+      
+
+
+      
+        
+        
+      
+
+    </div>
+  </div>
+</div>
+
+      
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <ul class="list-inline text-center footer-links">
+          
+              <li>
+                <a href="mailto:sharat_masetty@yahoo.com" title="Email me">
+                  <span class="fa-stack fa-lg">
+                    <i class="fas fa-circle fa-stack-2x"></i>
+                    <i class="fas fa-envelope fa-stack-1x fa-inverse"></i>
+                  </span>
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/smasetty" title="GitHub">
+                  <span class="fa-stack fa-lg">
+                    <i class="fas fa-circle fa-stack-2x"></i>
+                    <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                  </span>
+                </a>
+              </li>
+              <li>
+                <a href="https://twitter.com/smasetty" title="Twitter">
+                  <span class="fa-stack fa-lg">
+                    <i class="fas fa-circle fa-stack-2x"></i>
+                    <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                  </span>
+                </a>
+              </li>
+              <li>
+                <a href="https://linkedin.com/in/smasetty" title="LinkedIn">
+                  <span class="fa-stack fa-lg">
+                    <i class="fas fa-circle fa-stack-2x"></i>
+                    <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+                  </span>
+                </a>
+              </li>
+          
+        </ul>
+        <p class="credits copyright text-muted">
+          
+            
+              Sharat Masetty
+            
+          
+
+          &nbsp;&bull;&nbsp;&copy;
+          
+            2019
+          
+
+          
+            &nbsp;&bull;&nbsp;
+            <a href="https://smasetty.github.io">Sharat Masetty</a>
+          
+        </p>
+        
+        <p class="credits theme-by text-muted">
+          <a href="https://gohugo.io">Hugo v0.67.0</a> powered &nbsp;&bull;&nbsp; Theme <a href="https://github.com/halogenica/beautifulhugo">Beautiful Hugo</a> adapted from <a href="https://deanattali.com/beautiful-jekyll/">Beautiful Jekyll</a>
+          
+        </p>
+      </div>
+    </div>
+  </div>
+</footer><script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js" integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js" integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+<script src="https://smasetty.github.io/js/main.js"></script><script> renderMathInElement(document.body); </script><script src="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.js" integrity="sha384-QELNnmcmU8IR9ZAykt67vGr9/rZJdHbiWi64V88fCPaOohUlHCqUD/unNN0BXSqy" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe-ui-default.min.js" integrity="sha384-m67o7SkQ1ALzKZIFh4CiTA8tmadaujiTa9Vu+nqPSwDOqHrDmxLezTdFln8077+q" crossorigin="anonymous"></script><script src="https://smasetty.github.io/js/load-photoswipe.js"></script>
+
+
+
+
+
+
+
+
+
+    
+  </body>
+</html>
+
