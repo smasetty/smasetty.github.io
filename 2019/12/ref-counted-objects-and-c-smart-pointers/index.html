@@ -62,7 +62,7 @@ programming languages.">
   "headline": "Ref Counted Objects and C\x2b\x2b Smart Pointers",
   "description" : "In this article we will look into implementing a simple smart pointer class with reference counting support for tracking the lifetime of a pointer. First we will try to understand the primary models of memory management in most modern programming languages.\n",
   "inLanguage" : "en",
-  "wordCount":  1244 ,
+  "wordCount":  1188 ,
   "datePublished" : "2019-12-10T00:00:00",
   "dateModified" : "2019-12-10T00:00:00",
   "image" : "https:\/\/smasetty.github.io\/img\/sharat-2.jpg",
@@ -254,8 +254,6 @@ we will try to understand the primary models …">
     &nbsp;|&nbsp;<i class="fas fa-clock"></i>&nbsp;6&nbsp;minutes
   
   
-    &nbsp;|&nbsp;<i class="fas fa-book"></i>&nbsp;1244&nbsp;words
-  
   
     
       &nbsp;|&nbsp;<i class="fas fa-user"></i>&nbsp;Sharat Masetty
@@ -373,8 +371,6 @@ type feeding it the pointer from the prior memory allocation. Now, as part of th
 constructor for the SmartPointer class, a new reference count is instantiated and
 initialized with value 1. Now for all intents and purposes this reference count is
 tracking the life of this pointer. When copying or assigning pointers the
-reference count is incremented, and when the object goes out of scope, the
-reference count is decremented, and when the object goes out of scope, the
 reference count is decremented. When the reference count hits 0, the underlying
 object and the associated reference object are both freed up.</p>
 <p>The major complexity of reference management comes in handling the copy
@@ -418,48 +414,46 @@ lhs object. Then
 we copy over the pointer and the reference from the incoming rhs SmartPointer object(emp1)
 and then increment the reference count. Note even in this case, both emp3 and
 emp1 end up tracking the same underlying memory object.</p>
-<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="ln"> 1</span><span class="k">struct</span> <span class="nc">Employee</span> <span class="p">{</span>
-<span class="ln"> 2</span>    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">name</span><span class="p">;</span>
-<span class="ln"> 3</span>    <span class="kt">int</span> <span class="n">age</span><span class="p">;</span>
-<span class="ln"> 4</span>    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">designation</span><span class="p">;</span>
-<span class="ln"> 5</span>
-<span class="ln"> 6</span><span class="k">public</span><span class="o">:</span>
-<span class="ln"> 7</span>    <span class="n">Employee</span><span class="p">()</span><span class="o">:</span> <span class="n">name</span><span class="p">(</span><span class="s">&#34;&#34;</span><span class="p">),</span> <span class="n">age</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">designation</span><span class="p">(</span><span class="s">&#34;&#34;</span><span class="p">)</span> <span class="p">{};</span>
-<span class="ln"> 8</span>
-<span class="ln"> 9</span>    <span class="n">Employee</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">name</span><span class="p">,</span> <span class="kt">int</span> <span class="n">age</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">designation</span><span class="p">)</span><span class="o">:</span>
-<span class="ln">10</span>        <span class="n">name</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">age</span><span class="p">(</span><span class="n">age</span><span class="p">),</span> <span class="n">designation</span><span class="p">(</span><span class="n">designation</span><span class="p">)</span> <span class="p">{};</span>
-<span class="ln">11</span><span class="p">};</span>
-<span class="ln">12</span>
-<span class="ln">13</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-<span class="ln">14</span>    <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">Employee</span><span class="o">&gt;</span> <span class="n">emp1</span><span class="p">(</span><span class="k">new</span> <span class="n">Employee</span><span class="p">(</span><span class="s">&#34;Alien1&#34;</span><span class="p">,</span> <span class="mi">251</span><span class="p">,</span>
-<span class="ln">15</span>                                    <span class="s">&#34;Space Ship Janitor&#34;</span><span class="p">));</span>
-<span class="ln">16</span>
-<span class="ln">17</span>    <span class="p">{</span>
-<span class="ln">18</span>        <span class="c1">// The below statement calls the copy constructor
-</span><span class="ln">19</span><span class="c1"></span>        <span class="c1">//ref count of emp1 is incremented to 2
-</span><span class="ln">20</span><span class="c1"></span>        <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">Employee</span><span class="o">&gt;</span> <span class="n">emp2</span> <span class="o">=</span> <span class="n">emp1</span><span class="p">;</span>
-<span class="ln">21</span>        <span class="c1">// Do something here with emp2
-</span><span class="ln">22</span><span class="c1"></span>
-<span class="ln">23</span>        <span class="c1">// The below statement calls the overloaded assignment operator
-</span><span class="ln">24</span><span class="c1"></span>        <span class="c1">// ref count of emp3 is set to 0 and emp1 is incremented to 3
-</span><span class="ln">25</span><span class="c1"></span>        <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">Employee</span><span class="o">&gt;</span> <span class="n">emp3</span><span class="p">;</span>
-<span class="ln">26</span>        <span class="n">emp3</span> <span class="o">=</span> <span class="n">emp1</span><span class="p">;</span>
-<span class="ln">27</span>    <span class="p">}</span> <span class="c1">// emp2, emp3 destructor will be called here and ref count
-</span><span class="ln">28</span><span class="c1"></span>      <span class="c1">//of emp1 goes back to 1
-</span><span class="ln">29</span><span class="c1"></span>
-<span class="ln">30</span>    <span class="c1">//emp1 destructor will be called herer
-</span><span class="ln">31</span><span class="c1"></span>    <span class="c1">//ref count goes to emp1 hits 0 and the underlying Employee
-</span><span class="ln">32</span><span class="c1"></span>    <span class="c1">//pointer is freed up
-</span><span class="ln">33</span><span class="c1"></span><span class="p">}</span>
-</code></pre></div>
-<p>Here is a simple example of using the SmartPointer objects for tracking the
+<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="k">struct</span> <span class="nc">Employee</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">name</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">age</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">designation</span><span class="p">;</span>
+
+<span class="k">public</span><span class="o">:</span>
+    <span class="n">Employee</span><span class="p">()</span><span class="o">:</span> <span class="n">name</span><span class="p">(</span><span class="s">&#34;&#34;</span><span class="p">),</span> <span class="n">age</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">designation</span><span class="p">(</span><span class="s">&#34;&#34;</span><span class="p">)</span> <span class="p">{};</span>
+
+    <span class="n">Employee</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">name</span><span class="p">,</span> <span class="kt">int</span> <span class="n">age</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">designation</span><span class="p">)</span><span class="o">:</span>
+        <span class="n">name</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">age</span><span class="p">(</span><span class="n">age</span><span class="p">),</span> <span class="n">designation</span><span class="p">(</span><span class="n">designation</span><span class="p">)</span> <span class="p">{};</span>
+<span class="p">};</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">Employee</span><span class="o">&gt;</span> <span class="n">emp1</span><span class="p">(</span><span class="k">new</span> <span class="n">Employee</span><span class="p">(</span><span class="s">&#34;Alien1&#34;</span><span class="p">,</span> <span class="mi">251</span><span class="p">,</span>
+                                    <span class="s">&#34;Space Ship Janitor&#34;</span><span class="p">));</span>
+
+    <span class="p">{</span>
+        <span class="c1">// The below statement calls the copy constructor
+</span><span class="c1"></span>        <span class="c1">//ref count of emp1 is incremented to 2
+</span><span class="c1"></span>        <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">Employee</span><span class="o">&gt;</span> <span class="n">emp2</span> <span class="o">=</span> <span class="n">emp1</span><span class="p">;</span>
+        <span class="c1">// Do something here with emp2
+</span><span class="c1"></span>
+        <span class="c1">// The below statement calls the overloaded assignment operator
+</span><span class="c1"></span>        <span class="c1">// ref count of emp3 is set to 0 and emp1 is incremented to 3
+</span><span class="c1"></span>        <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">Employee</span><span class="o">&gt;</span> <span class="n">emp3</span><span class="p">;</span>
+        <span class="n">emp3</span> <span class="o">=</span> <span class="n">emp1</span><span class="p">;</span>
+    <span class="p">}</span> <span class="c1">// emp2, emp3 destructor will be called here and ref count
+</span><span class="c1"></span>      <span class="c1">//of emp1 goes back to 1
+</span><span class="c1"></span>
+    <span class="c1">//emp1 destructor will be called herer
+</span><span class="c1"></span>    <span class="c1">//ref count goes to emp1 hits 0 and the underlying Employee
+</span><span class="c1"></span>    <span class="c1">//pointer is freed up
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></div><p>Here is a simple example of using the SmartPointer objects for tracking the
 pointers lifetime. SmartPointer emp1 is instantiated with an object of type
 Employee allocated on the heap(new Employee() returns a pointer). This pointer is now
 managed by the SmartPointer class with reference counting.</p>
-<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="ln">1</span>    <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">Employee</span><span class="o">&gt;</span> <span class="n">emp1</span><span class="p">(</span><span class="k">new</span> <span class="n">Employee</span><span class="p">(</span><span class="s">&#34;Alien1&#34;</span><span class="p">,</span> <span class="mi">251</span><span class="p">,</span>
-<span class="ln">2</span>                                    <span class="s">&#34;Space Ship Janitor&#34;</span><span class="p">));</span>
-</code></pre></div>
-<p>I have added comments to explain the reference counting of the underlying
+<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp">    <span class="n">SmartPointer</span><span class="o">&lt;</span><span class="n">Employee</span><span class="o">&gt;</span> <span class="n">emp1</span><span class="p">(</span><span class="k">new</span> <span class="n">Employee</span><span class="p">(</span><span class="s">&#34;Alien1&#34;</span><span class="p">,</span> <span class="mi">251</span><span class="p">,</span>
+                                    <span class="s">&#34;Space Ship Janitor&#34;</span><span class="p">));</span>
+</code></pre></div><p>I have added comments to explain the reference counting of the underlying
 pointer object and when it is freed up.</p>
 
         
